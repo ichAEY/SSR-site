@@ -10,7 +10,7 @@ const menu = [
 ['Соусы','Шашлычный','','100 ₽'],['Соусы','Чесночный','','100 ₽'],['Соусы','Сырный','','100 ₽'],['Соусы','Аджика','','100 ₽'],['Соусы','Лаваш тонкий','','80 ₽'],['Соусы','Лепёшка','','100 ₽'],
 ['Десерты','Чизкейк','1 шт.','250 ₽'],['Десерты','Фруктовая нарезка','300 г','400 ₽'],['Десерты','Мороженое','','200 ₽'],['Десерты','Шоколад','','150 ₽'],
 ['Напитки','Латте','','250 ₽'],['Напитки','Капучино','','250 ₽'],['Напитки','Эспрессо','','200 ₽'],['Напитки','Американо','','200 ₽'],['Напитки','Чай в ассортименте','','50 ₽'],['Напитки','Чайник чая в ассортименте','','300 ₽'],['Напитки','Соки натуральные','1 л','300 ₽'],['Напитки','Лимонад','0.5 л','200 ₽'],['Напитки','Coca-Cola','0.5 л','200 ₽'],['Напитки','Вода без газа','0.5 л','200 ₽'],['Напитки','Минеральная вода','0.5 л','250 ₽'],['Напитки','Армянский компот','1 л','400 ₽'],
-['Пиво','Stella Artois','0.45 л','300 ₽'],['Пиво','Kozel светлое / тёмное','0.45 л','250 ₽'],['Пиво','Bud','0.45 л','250 ₽'],['Пиво','Amsterdam','0.45 л','300 ₽'],['Пиво','Kilkia','0.45 л','300 ₽'],['Пиво','Пробковый сбор','0.4 л','350 ₽'],['Пиво','Бой посуды','','500 ₽'],
+['Пиво','Stella Artois','0.45 л','300 ₽'],['Пиво','Kozel светлое / тёмное','0.45 л','250 ₽'],['Пиво','Bud','0.45 л','250 ₽'],['Пиво','Amsterdam','0.45 л','300 ₽'],['Пиво','Киликия','0.45 л','300 ₽'],['Пиво','Пробковый сбор','0.4 л','350 ₽'],['Пиво','Бой посуды','','500 ₽'],
 ['Закуски к пиву','Креветки королевские','200 г','550 ₽'],['Закуски к пиву','Гренки с чесноком и соусом','100 г','300 ₽'],['Закуски к пиву','Луковые кольца','150 г','350 ₽'],['Закуски к пиву','Пивная тарелка','','1500 ₽'],['Закуски к пиву','Фисташки','','200 ₽'],['Закуски к пиву','Арахис','','200 ₽'],['Закуски к пиву','Чипсы','','300 ₽']
 ];
 const order=['Все','Первые блюда','Вторые блюда','Шашлык на углях','Пицца','Холодные закуски','Салаты','Гарниры','Хачапури','Соусы','Десерты','Напитки','Пиво','Закуски к пиву'];
@@ -103,7 +103,8 @@ function render(category){
 			const desc = descriptions[name] ? `<div class="menu-desc">${descriptions[name]}</div>` : '';
 			const rowClasses=['menu-row'];
 			if(name==='Лаваш тонкий'||name==='Пробковый сбор')rowClasses.push('menu-row-separated');
-			if(name==='Пробковый сбор')rowClasses.push('menu-row-accent');
+			if(name==='Пробковый сбор')rowClasses.push('menu-row-charge','menu-row-charge-start');
+			if(name==='Бой посуды')rowClasses.push('menu-row-charge','menu-row-charge-end');
 			return `<div class="${rowClasses.join(' ')}"><div class="menu-name">${name}${desc}</div><div class="menu-price"><small>${weight}</small>${price}</div></div>`
 		}).join('');
 		return `<section class="menu-group"><h3>${group}</h3>${rows}</section>`
@@ -133,15 +134,20 @@ if(aboutSlider){
 	const prev=aboutSlider.querySelector('.about-slider-prev');
 	const next=aboutSlider.querySelector('.about-slider-next');
 	const dotsWrap=aboutSlider.querySelector('.about-slider-dots');
+	const lightbox=document.querySelector('.photo-lightbox');
+	const lightboxImage=lightbox?.querySelector('.photo-lightbox-image');
+	const lightboxClose=lightbox?.querySelector('.photo-lightbox-close');
+	const lightboxPrev=lightbox?.querySelector('.photo-lightbox-prev');
+	const lightboxNext=lightbox?.querySelector('.photo-lightbox-next');
 	let slideIndex=0;
-	let autoTimer;
+	let lightboxIndex=0;
 	let touchStartX=0;
 	const dots=slides.map((_,index)=>{
 		const dot=document.createElement('button');
 		dot.type='button';
 		dot.className='about-slider-dot';
 		dot.setAttribute('aria-label',`Фото ${index+1}`);
-		dot.addEventListener('click',()=>{goToSlide(index);restartAuto()});
+		dot.addEventListener('click',()=>goToSlide(index));
 		dotsWrap.append(dot);
 		return dot;
 	});
@@ -150,19 +156,54 @@ if(aboutSlider){
 		track.style.transform=`translateX(-${slideIndex*100}%)`;
 		dots.forEach((dot,i)=>dot.classList.toggle('is-active',i===slideIndex));
 	}
-	function restartAuto(){
-		clearInterval(autoTimer);
-		autoTimer=setInterval(()=>goToSlide(slideIndex+1),5500);
+	function openLightbox(index){
+		if(!lightbox||!lightboxImage)return;
+		lightboxIndex=(index+slides.length)%slides.length;
+		const img=slides[lightboxIndex].querySelector('img');
+		lightboxImage.src=img.src;
+		lightboxImage.alt=img.alt;
+		lightbox.classList.add('is-open');
+		lightbox.setAttribute('aria-hidden','false');
+		document.body.classList.add('lightbox-open');
 	}
-	prev.addEventListener('click',()=>{goToSlide(slideIndex-1);restartAuto()});
-	next.addEventListener('click',()=>{goToSlide(slideIndex+1);restartAuto()});
+	function closeLightbox(){
+		if(!lightbox)return;
+		lightbox.classList.remove('is-open');
+		lightbox.setAttribute('aria-hidden','true');
+		document.body.classList.remove('lightbox-open');
+	}
+	function moveLightbox(direction){
+		openLightbox(lightboxIndex+direction);
+	}
+	slides.forEach((slide,index)=>{
+		const img=slide.querySelector('img');
+		img.tabIndex=0;
+		img.setAttribute('role','button');
+		img.setAttribute('aria-label',`Открыть фото ${index+1}`);
+		img.addEventListener('click',()=>openLightbox(index));
+		img.addEventListener('keydown',event=>{
+			if(event.key==='Enter'||event.key===' '){
+				event.preventDefault();
+				openLightbox(index);
+			}
+		});
+	});
+	prev.addEventListener('click',()=>goToSlide(slideIndex-1));
+	next.addEventListener('click',()=>goToSlide(slideIndex+1));
 	aboutSlider.addEventListener('touchstart',event=>{touchStartX=event.touches[0].clientX},{passive:true});
 	aboutSlider.addEventListener('touchend',event=>{
 		const delta=event.changedTouches[0].clientX-touchStartX;
-		if(Math.abs(delta)>45){goToSlide(slideIndex+(delta<0?1:-1));restartAuto()}
+		if(Math.abs(delta)>45)goToSlide(slideIndex+(delta<0?1:-1));
 	},{passive:true});
-	aboutSlider.addEventListener('mouseenter',()=>clearInterval(autoTimer));
-	aboutSlider.addEventListener('mouseleave',restartAuto);
+	lightboxClose?.addEventListener('click',closeLightbox);
+	lightboxPrev?.addEventListener('click',()=>moveLightbox(-1));
+	lightboxNext?.addEventListener('click',()=>moveLightbox(1));
+	lightbox?.addEventListener('click',event=>{if(event.target===lightbox)closeLightbox()});
+	document.addEventListener('keydown',event=>{
+		if(!lightbox?.classList.contains('is-open'))return;
+		if(event.key==='Escape')closeLightbox();
+		if(event.key==='ArrowLeft')moveLightbox(-1);
+		if(event.key==='ArrowRight')moveLightbox(1);
+	});
 	goToSlide(0);
-	restartAuto();
 }
